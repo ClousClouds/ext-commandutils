@@ -1,7 +1,6 @@
 #include "php.h"
 #include "php_commandutils.h"
-#include "ext/standard/info.h"
-#include <regex.h>
+#include "Zend/zend_exceptions.h"
 
 zend_class_entry *commandException_ce;
 zend_class_entry *invalidCommandSyntaxException_ce;
@@ -41,6 +40,11 @@ PHP_FUNCTION(parseQuoteAware) {
     RETURN_ZVAL(&args, 1, 0);
 }
 
+static const zend_function_entry commandStringHelper_functions[] = {
+    PHP_ME_MAPPING(parseQuoteAware, parseQuoteAware, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_FE_END
+};
+
 PHP_MINIT_FUNCTION(commandutils) {
     zend_class_entry ce;
 
@@ -50,14 +54,11 @@ PHP_MINIT_FUNCTION(commandutils) {
     INIT_CLASS_ENTRY(ce, "pocketmine\\command\\utils\\InvalidCommandSyntaxException", NULL);
     invalidCommandSyntaxException_ce = zend_register_internal_class_ex(&ce, commandException_ce);
 
-    INIT_CLASS_ENTRY(ce, "pocketmine\\command\\utils\\CommandStringHelper", (zend_function_entry[]){
-        PHP_ME_MAPPING(parseQuoteAware, parseQuoteAware, NULL, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-        PHP_FE_END
-    });
+    INIT_CLASS_ENTRY(ce, "pocketmine\\command\\utils\\CommandStringHelper", commandStringHelper_functions);
     commandStringHelper_ce = zend_register_internal_class(&ce);
 
     INIT_CLASS_ENTRY(ce, "pocketmine\\utils\\AssumptionFailedError", NULL);
-    assumptionFailedError_ce = zend_register_internal_class_ex(&ce, zend_ce_error);
+    assumptionFailedError_ce = zend_register_internal_class_ex(&ce, zend_ce_exception);
 
     return SUCCESS;
 }

@@ -14,12 +14,13 @@ jobs:
       - name: Install PHP & Dependencies
         run: |
           sudo apt update
-          sudo apt install -y php php-dev php-pear build-essential autoconf
+          sudo apt install -y php php-dev php-pear build-essential autoconf libc6-dev
 
       - name: Build extension
         run: |
+          export CFLAGS="-D_GNU_SOURCE"
           phpize
-          ./configure --enable-commandutils
+          ./configure --enable-commandutils LDFLAGS="-lregex"
           make
           sudo make install
 

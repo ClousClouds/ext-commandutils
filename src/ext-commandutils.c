@@ -1,7 +1,8 @@
 #include "php.h"
 #include "php_commandutils.h"
 #include "Zend/zend_exceptions.h"
-#include "regex.h"
+#include "ext/pcre/php_pcre.h"
+
 zend_class_entry *commandException_ce;
 zend_class_entry *invalidCommandSyntaxException_ce;
 zend_class_entry *commandStringHelper_ce;
@@ -10,34 +11,25 @@ zend_class_entry *assumptionFailedError_ce;
 PHP_FUNCTION(parseQuoteAware) {
     char *command;
     size_t command_len;
-    zval args;
     zend_string *pattern;
-    regex_t regex;
-    regmatch_t pmatch[3];
+    zend_long flags = 0;
+    zend_string *delimiter = zend_string_init("/", 1, 0);
+    zend_string *compiled_pattern;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_STRING(command, command_len)
     ZEND_PARSE_PARAMETERS_END();
 
-    array_init(&args);
+    pattern = zend_string_init("\"((?:\\\\.|[^\\\\\"])*)\"|(\\S+)", strlen("\"((?:\\\\.|[^\\\\\"])*)\"|(\\S+)"), 0);
+    compiled_pattern = zend_pcre_compile(pattern, delimiter, &flags, 0);
     
-    pattern = zend_string_init("\"((?:\\\\.|[^\\\\\"])*)\"|(\\S+)", sizeof("\"((?:\\\\.|[^\\\\\"])*)\"|(\\S+)") - 1, 0);
-    
-    if (regcomp(&regex, ZSTR_VAL(pattern), REG_EXTENDED) != 0) {
-        zend_string_release(pattern);
+    if (!compiled_pattern) {
         RETURN_FALSE;
     }
 
-    char *p = command;
-    while (regexec(&regex, p, 3, pmatch, 0) == 0) {
-        zend_string *match = zend_string_init(p + pmatch[1].rm_so, pmatch[1].rm_eo - pmatch[1].rm_so, 0);
-        add_next_index_str(&args, match);
-        p += pmatch[0].rm_eo;
-    }
-
-    regfree(&regex);
+    array_init(return_value);
     zend_string_release(pattern);
-    RETURN_ZVAL(&args, 1, 0);
+    zend_string_release(compiled_pattern);
 }
 
 static const zend_function_entry commandStringHelper_functions[] = {

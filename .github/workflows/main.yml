@@ -1,0 +1,29 @@
+name: Build & Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install PHP & Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y php php-dev php-pear build-essential autoconf
+
+      - name: Build extension
+        run: |
+          phpize
+          ./configure --enable-commandutils
+          make
+          sudo make install
+
+      - name: Run tests
+        run: |
+          echo "extension=commandutils.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+          php -m | grep commandutils

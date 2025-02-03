@@ -1,7 +1,7 @@
 #include "php.h"
 #include "php_commandutils.h"
 #include "Zend/zend_exceptions.h"
-
+#include "regex.h"
 zend_class_entry *commandException_ce;
 zend_class_entry *invalidCommandSyntaxException_ce;
 zend_class_entry *commandStringHelper_ce;
